@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% from "partials/macros.html" import product_card with context %}
+{% block content %}
+<div class="container">
+  <!-- Banner -->
+  <div id="heroCarousel" class="carousel slide hero mb-4" data-bs-ride="carousel">
+    <div class="carousel-indicators">
+      {% for b in banners %}<button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="{{ loop.index0 }}" class="{{ 'active' if loop.first }}"></button>{% endfor %}
+    </div>
+    <div class="carousel-inner">
+      {% for b in banners %}
+      <div class="carousel-item {{ 'active' if loop.first }}">
+        <div class="row align-items-center g-0 p-4 p-lg-5">
+          <div class="col-lg-6 position-relative" style="z-index:2">
+            <span class="badge bg-warning text-dark mb-3">Tươi mỗi ngày</span>
+            <h1>{{ b.title }}</h1>
+            <p class="lead my-3">Hải sản đánh bắt trong ngày, sơ chế sạch, đóng thùng giữ lạnh và giao tận nhà trong 2 giờ.</p>
+            <a href="{{ b.link_url or url_for('product.listing') }}" class="btn btn-coral btn-lg rounded-pill px-4">Mua ngay <i class="bi bi-arrow-right"></i></a>
+          </div>
+          <div class="col-lg-6 text-center d-none d-lg-block">
+            <img class="hero-img" src="{{ b.image_url | img('banner') }}" alt="{{ b.title }}">
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Cam kết -->
+  <div class="row g-3 feature-strip mb-5">
+    <div class="col-6 col-lg-3"><div class="item"><i class="bi bi-truck"></i><div><b>Giao nhanh 2h</b><small>Nội thành Hà Nội</small></div></div></div>
+    <div class="col-6 col-lg-3"><div class="item"><i class="bi bi-snow"></i><div><b>Giữ lạnh 0–4°C</b><small>Thùng xốp + đá gel</small></div></div></div>
+    <div class="col-6 col-lg-3"><div class="item"><i class="bi bi-patch-check"></i><div><b>Rõ nguồn gốc</b><small>Ghi xuất xứ từng mẻ</small></div></div></div>
+    <div class="col-6 col-lg-3"><div class="item"><i class="bi bi-arrow-repeat"></i><div><b>Đổi mới 100%</b><small>Nếu hàng không tươi</small></div></div></div>
+  </div>
+
+  <!-- Danh mục -->
+  <div class="d-flex justify-content-between align-items-end mb-3">
+    <h3 class="section-title"><small>Khám phá</small>Danh mục hải sản</h3>
+  </div>
+  <div class="row g-3 mb-5">
+    {% for c in categories %}
+    <div class="col-4 col-md-2">
+      <a class="cat-tile" href="{{ url_for('product.listing', **{'danh-muc': c.slug}) }}">
+        <img src="{{ c.image_url | img('category') }}" alt="{{ c.name }}"><div class="fw-semibold small">{{ c.name }}</div></a>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Nổi bật -->
+  {% if featured %}
+  <div class="d-flex justify-content-between align-items-end mb-3">
+    <h3 class="section-title"><small>Được chọn lọc</small>Sản phẩm nổi bật</h3>
+    <a href="{{ url_for('product.listing') }}" class="fw-semibold">Xem tất cả <i class="bi bi-chevron-right"></i></a>
+  </div>
+  <div class="row g-3 mb-5">
+    {% for p in featured %}<div class="col-6 col-md-4 col-lg-3">{{ product_card(p) }}</div>{% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- Bán chạy -->
+  {% if best %}
+  <div class="bg-sand rounded-4 p-4 mb-5">
+    <div class="d-flex justify-content-between align-items-end mb-3">
+      <h3 class="section-title"><small>Khách hàng tin chọn</small>Bán chạy nhất</h3>
+      <a href="{{ url_for('product.listing', **{'sap-xep': 'best_selling'}) }}" class="fw-semibold">Xem thêm <i class="bi bi-chevron-right"></i></a>
+    </div>
+    <div class="row g-3">
+      {% for p in best %}<div class="col-6 col-lg-3">{{ product_card(p) }}</div>{% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Mới -->
+  <div class="d-flex justify-content-between align-items-end mb-3">
+    <h3 class="section-title"><small>Vừa cập bến</small>Hàng mới về</h3>
+    <a href="{{ url_for('product.listing', **{'sap-xep': 'newest'}) }}" class="fw-semibold">Xem tất cả <i class="bi bi-chevron-right"></i></a>
+  </div>
+  <div class="row g-3">
+    {% for p in newest %}<div class="col-6 col-md-4 col-lg-3">{{ product_card(p) }}</div>{% endfor %}
+  </div>
+</div>
+{% endblock %}

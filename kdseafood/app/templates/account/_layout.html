@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container">
+  <div class="row g-4">
+    <aside class="col-lg-3">
+      <div class="card-soft p-3 text-center mb-3">
+        <img class="avatar mb-2" src="{{ g.user.avatar_url | img('avatar') }}" alt="">
+        <div class="fw-bold">{{ g.user.full_name }}</div>
+        <div class="small text-muted">@{{ g.user.username }}</div>
+      </div>
+      <div class="list-group account-nav">
+        <a class="list-group-item {{ 'active' if active == 'profile' }}" href="{{ url_for('account.profile') }}"><i class="bi bi-person me-2"></i>Thông tin cá nhân</a>
+        <a class="list-group-item {{ 'active' if active == 'orders' }}" href="{{ url_for('order.my_orders') }}"><i class="bi bi-receipt me-2"></i>Đơn hàng của tôi</a>
+        <a class="list-group-item {{ 'active' if active == 'addresses' }}" href="{{ url_for('account.addresses') }}"><i class="bi bi-geo-alt me-2"></i>Sổ địa chỉ</a>
+        <a class="list-group-item {{ 'active' if active == 'wishlist' }}" href="{{ url_for('account.wishlist_view') }}"><i class="bi bi-heart me-2"></i>Sản phẩm yêu thích</a>
+      </div>
+    </aside>
+    <section class="col-lg-9">{% block account %}{% endblock %}</section>
+  </div>
+</div>
+{% endblock %}

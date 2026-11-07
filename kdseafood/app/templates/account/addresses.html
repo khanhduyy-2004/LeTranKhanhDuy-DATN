@@ -1,0 +1,47 @@
+{% extends "account/_layout.html" %}
+{% from "partials/macros.html" import csrf with context %}
+{% block title %}Sổ địa chỉ{% endblock %}
+{% set active = 'addresses' %}
+
+{% macro address_fields(a={}) -%}
+<div class="row g-2">
+  <div class="col-md-6"><input class="form-control" name="receiver_name" placeholder="Họ tên người nhận *" value="{{ a.receiver_name or '' }}" required></div>
+  <div class="col-md-6"><input class="form-control" name="phone" placeholder="Số điện thoại *" value="{{ a.phone or '' }}" pattern="0[0-9]{9}" required></div>
+  <div class="col-12"><input class="form-control" name="address_line" placeholder="Số nhà, tên đường *" value="{{ a.address_line or '' }}" required></div>
+  <div class="col-md-4"><input class="form-control" name="ward" placeholder="Phường / Xã" value="{{ a.ward or '' }}"></div>
+  <div class="col-md-4"><input class="form-control" name="district" placeholder="Quận / Huyện" value="{{ a.district or '' }}"></div>
+  <div class="col-md-4"><input class="form-control" name="province" placeholder="Tỉnh / Thành phố *" value="{{ a.province or '' }}" required></div>
+  <div class="col-12 form-check ms-1"><input class="form-check-input" type="checkbox" name="is_default" value="1" id="def{{ a.id or 'new' }}" {{ 'checked' if a.is_default }}>
+    <label class="form-check-label small" for="def{{ a.id or 'new' }}">Đặt làm địa chỉ mặc định</label></div>
+</div>
+{%- endmacro %}
+
+{% block account %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h4 class="fw-bold mb-0">Sổ địa chỉ</h4>
+  <button class="btn btn-coral rounded-pill" data-bs-toggle="collapse" data-bs-target="#addForm"><i class="bi bi-plus-lg me-1"></i>Thêm địa chỉ</button>
+</div>
+<div class="collapse {{ 'show' if not addresses }} mb-3" id="addForm">
+  <form method="post" action="{{ url_for('account.address_add') }}" class="card-soft p-3">{{ csrf() }}
+    {{ address_fields() }}<button class="btn btn-ocean mt-2 rounded-pill">Lưu địa chỉ</button></form>
+</div>
+{% for a in addresses %}
+<div class="card-soft p-3 mb-3">
+  <div class="d-flex justify-content-between flex-wrap gap-2">
+    <div><b>{{ a.receiver_name }}</b> · {{ a.phone }} {% if a.is_default %}<span class="badge text-bg-info">Mặc định</span>{% endif %}
+      <div class="small text-muted">{{ a.address_line }}{% if a.ward %}, {{ a.ward }}{% endif %}{% if a.district %}, {{ a.district }}{% endif %}, {{ a.province }}</div></div>
+    <div class="d-flex gap-1 align-items-start">
+      <button class="btn btn-sm btn-light" data-bs-toggle="collapse" data-bs-target="#edit{{ a.id }}">Sửa</button>
+      {% if not a.is_default %}
+      <form method="post" action="{{ url_for('account.address_default', aid=a.id) }}">{{ csrf() }}<button class="btn btn-sm btn-light">Đặt mặc định</button></form>
+      {% endif %}
+      <form method="post" action="{{ url_for('account.address_delete', aid=a.id) }}" data-confirm="Xóa địa chỉ này?">{{ csrf() }}<button class="btn btn-sm btn-outline-danger">Xóa</button></form>
+    </div>
+  </div>
+  <div class="collapse mt-3" id="edit{{ a.id }}">
+    <form method="post" action="{{ url_for('account.address_edit', aid=a.id) }}">{{ csrf() }}{{ address_fields(a) }}
+      <button class="btn btn-ocean btn-sm mt-2 rounded-pill">Cập nhật</button></form>
+  </div>
+</div>
+{% endfor %}
+{% endblock %}

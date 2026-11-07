@@ -1,0 +1,38 @@
+<footer class="site-footer pt-5 pb-3 mt-4">
+  <div class="container">
+    <div class="row g-4">
+      <div class="col-lg-4">
+        <div class="brand text-white mb-2"><i class="bi bi-water"></i> KD<span>SeaFood</span></div>
+        <p class="small">Hải sản tươi sống, rõ nguồn gốc – đánh bắt trong ngày, sơ chế sạch, giao tận nhà.</p>
+        <p class="small mb-1"><i class="bi bi-geo-alt me-2"></i>Trường Đại học Nguyễn Trãi, Hà Nội</p>
+        <p class="small mb-1"><i class="bi bi-telephone me-2"></i>0779 329 341</p>
+        <p class="small"><i class="bi bi-envelope me-2"></i>admin@kdseafood.vn</p>
+      </div>
+      <div class="col-6 col-lg-2">
+        <h6>Danh mục</h6>
+        <ul class="list-unstyled small">
+          {% for c in nav_categories[:6] %}<li class="mb-1"><a href="{{ url_for('product.listing', **{'danh-muc': c.slug}) }}">{{ c.name }}</a></li>{% endfor %}
+        </ul>
+      </div>
+      <div class="col-6 col-lg-2">
+        <h6>Hỗ trợ</h6>
+        <ul class="list-unstyled small">
+          <li class="mb-1"><a href="{{ url_for('main.about') }}">Giới thiệu</a></li>
+          <li class="mb-1"><a href="{{ url_for('main.policy') }}">Chính sách giao hàng</a></li>
+          <li class="mb-1"><a href="{{ url_for('main.policy') }}#doi-tra">Đổi trả & hoàn tiền</a></li>
+          <li class="mb-1"><a href="{{ url_for('main.contact') }}">Liên hệ</a></li>
+        </ul>
+      </div>
+      <div class="col-lg-4">
+        <h6>Cam kết KDSeaFood</h6>
+        <ul class="list-unstyled small">
+          <li class="mb-1"><i class="bi bi-check2-circle me-2"></i>Hải sản tươi – chết đổi mới trong 2h</li>
+          <li class="mb-1"><i class="bi bi-check2-circle me-2"></i>Cân đủ, giá niêm yết rõ ràng</li>
+          <li class="mb-1"><i class="bi bi-check2-circle me-2"></i>Đóng thùng xốp, giữ lạnh khi giao</li>
+        </ul>
+      </div>
+    </div>
+    <hr class="border-secondary">
+    <div class="small text-center">© {{ current_year }} KDSeaFood – Đồ án tốt nghiệp · Lê Trần Khánh Duy · K22CNT3</div>
+  </div>
+</footer>

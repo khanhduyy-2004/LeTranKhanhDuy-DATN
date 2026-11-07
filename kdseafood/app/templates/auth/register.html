@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% from "partials/macros.html" import csrf with context %}
+{% block title %}Đăng ký{% endblock %}
+{% block content %}
+<div class="container auth-wrap d-flex align-items-center">
+  <div class="card auth-card w-100 mx-auto" style="max-width: 880px">
+    <div class="row g-0">
+      <div class="col-md-5 auth-side p-5 d-none d-md-flex flex-column justify-content-center">
+        <div class="brand text-white mb-3"><i class="bi bi-water"></i> KD<span>SeaFood</span></div>
+        <h4 class="fw-bold">Tạo tài khoản</h4>
+        <ul class="list-unstyled opacity-75 small mt-2">
+          <li class="mb-2"><i class="bi bi-check2 me-2"></i>Lưu giỏ hàng & sổ địa chỉ</li>
+          <li class="mb-2"><i class="bi bi-check2 me-2"></i>Theo dõi trạng thái đơn hàng</li>
+          <li class="mb-2"><i class="bi bi-check2 me-2"></i>Đánh giá sản phẩm đã mua</li>
+        </ul>
+      </div>
+      <div class="col-md-7 p-4 p-md-5">
+        <h3 class="fw-bold mb-4">Đăng ký</h3>
+        <form method="post" class="row g-3">
+          {{ csrf() }}
+          <div class="col-12"><label class="form-label">Họ và tên *</label><input class="form-control" name="full_name" value="{{ form.full_name }}" required></div>
+          <div class="col-md-6"><label class="form-label">Tên đăng nhập *</label><input class="form-control" name="username" value="{{ form.username }}" pattern="[a-zA-Z0-9_.]{4,30}" title="4–30 ký tự: chữ không dấu, số, dấu chấm, gạch dưới" required></div>
+          <div class="col-md-6"><label class="form-label">Số điện thoại</label><input class="form-control" name="phone" value="{{ form.phone }}" pattern="0[0-9]{9}"></div>
+          <div class="col-12"><label class="form-label">Email *</label><input class="form-control" type="email" name="email" value="{{ form.email }}" required></div>
+          <div class="col-md-6"><label class="form-label">Mật khẩu *</label><input class="form-control" type="password" name="password" minlength="6" required></div>
+          <div class="col-md-6"><label class="form-label">Nhập lại mật khẩu *</label><input class="form-control" type="password" name="confirm_password" minlength="6" required></div>
+          <div class="col-12"><button class="btn btn-coral btn-lg w-100 rounded-pill">Tạo tài khoản</button></div>
+        </form>
+        <p class="text-center mt-4 mb-0">Đã có tài khoản? <a href="{{ url_for('auth.login') }}" class="fw-semibold">Đăng nhập</a></p>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

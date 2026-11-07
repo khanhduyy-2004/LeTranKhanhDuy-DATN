@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+{% from "partials/macros.html" import product_card, stars, csrf with context %}
+{% block title %}{{ p.name }}{% endblock %}
+{% block content %}
+<div class="container">
+  <nav class="small mb-3"><a href="{{ url_for('main.home') }}">Trang chủ</a> /
+    <a href="{{ url_for('product.listing', **{'danh-muc': p.category_slug}) }}">{{ p.category_name }}</a> / {{ p.name }}</nav>
+
+  <div class="row g-4 g-lg-5">
+    <div class="col-lg-6">
+      <div class="gallery-main mb-2"><img id="mainImage" src="{{ (images[0].image_url if images else none) | img }}" alt="{{ p.name }}"></div>
+      {% if images | length > 1 %}
+      <div class="gallery-thumbs d-flex gap-2 flex-wrap">
+        {% for im in images %}<img src="{{ im.image_url | img }}" class="{{ 'active' if loop.first }}" alt="">{% endfor %}
+      </div>
+      {% endif %}
+    </div>
+
+    <div class="col-lg-6">
+      <span class="badge text-bg-light border mb-2">{{ p.category_name }}</span>
+      <h2 class="fw-bold">{{ p.name }}</h2>
+      <div class="d-flex align-items-center gap-3 text-muted small mb-3">
+        {% if p.review_count %}<span>{{ stars(p.avg_rating | float) }} <b class="text-dark">{{ p.avg_rating }}</b> ({{ p.review_count }} đánh giá)</span>{% endif %}
+        <span>Đã bán {{ p.sold_quantity | qty }} {{ p.unit }}</span>
+      </div>
+      <div class="price-big mb-3">{{ p.price | vnd }} <span class="fs-6 text-muted fw-normal">/ {{ p.unit }}</span></div>
+      {% if p.short_desc %}<p class="text-muted">{{ p.short_desc }}</p>{% endif %}
+
+      <table class="spec mb-3"><tbody>
+        <tr><td>Xuất xứ</td><td><i class="bi bi-geo-alt text-coral me-1"></i>{{ p.origin or 'Đang cập nhật' }}</td></tr>
+        <tr><td>Đơn vị tính</td><td>{{ p.unit }}</td></tr>
+        <tr><td>Tình trạng</td><td>
+          {% if p.stock_quantity > 0 %}<span class="text-success fw-semibold"><i class="bi bi-check-circle me-1"></i>Còn hàng</span> <span class="text-muted">({{ p.stock_quantity | qty }} {{ p.unit }})</span>
+          {% else %}<span class="text-danger fw-semibold">Hết hàng</span>{% endif %}</td></tr>
+      </tbody></table>
+
+      {% if g.admin %}
+        <a class="btn btn-ocean" href="{{ url_for('admin.product_edit', pid=p.id) }}"><i class="bi bi-pencil me-1"></i>Sửa sản phẩm</a>
+      {% elif p.stock_quantity > 0 %}
+      <form method="post" action="{{ url_for('cart.add') }}" class="js-add-cart">
+        {{ csrf() }}<input type="hidden" name="product_id" value="{{ p.id }}">
+        <label class="form-label small text-muted">Số lượng ({{ p.unit }}){% if p.unit == 'kg' %} – có thể chọn 0,5 kg{% endif %}</label>
+        <div class="d-flex flex-wrap gap-2 align-items-center">
+          <div class="input-group qty-input">
+            <button class="btn btn-outline-secondary" type="button" data-step="-1">−</button>
+            <input class="form-control" type="number" name="quantity" value="1" min="{{ 0.5 if p.unit == 'kg' else 1 }}"
+                   step="{{ 0.5 if p.unit == 'kg' else 1 }}" max="{{ p.stock_quantity | float }}">
+            <button class="btn btn-outline-secondary" type="button" data-step="1">+</button>
+          </div>
+          <button class="btn btn-coral btn-lg rounded-pill px-4"><i class="bi bi-bag-plus me-1"></i>Thêm vào giỏ</button>
+          <button class="btn btn-outline-ocean btn-lg rounded-pill px-4" name="buy_now" value="1">Mua ngay</button>
+          <button type="button" class="btn btn-light btn-lg rounded-circle js-wish" data-url="{{ url_for('account.wishlist_toggle', pid=p.id) }}" title="Yêu thích">
+            <i class="bi {{ 'bi-heart-fill' if p.id in wish_ids else 'bi-heart' }} text-coral"></i></button>
+        </div>
+      </form>
+      {% endif %}
+
+      <div class="row g-2 mt-4 small">
+        <div class="col-6"><div class="p-2 bg-foam rounded-3"><i class="bi bi-snow text-primary me-1"></i>Đóng thùng giữ lạnh</div></div>
+        <div class="col-6"><div class="p-2 bg-foam rounded-3"><i class="bi bi-arrow-repeat text-primary me-1"></i>Đổi mới nếu không tươi</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mô tả + đánh giá -->
+  <div class="row g-4 mt-4">
+    <div class="col-lg-7">
+      <div class="card-soft p-4 h-100">
+        <h5 class="fw-bold text-ocean">Mô tả sản phẩm</h5>
+        <div class="text-muted" style="white-space: pre-line">{{ p.description or p.short_desc or 'Đang cập nhật.' }}</div>
+      </div>
+    </div>
+    <div class="col-lg-5" id="danh-gia">
+      <div class="card-soft p-4 h-100">
+        <h5 class="fw-bold">Đánh giá từ khách hàng</h5>
+        <div class="d-flex gap-4 align-items-center my-3">
+          <div class="text-center"><div class="display-5 fw-bold">{{ p.avg_rating if p.review_count else '–' }}</div>{{ stars(p.avg_rating | float) }}
+            <div class="small text-muted">{{ p.review_count }} đánh giá</div></div>
+          <div class="flex-grow-1">
+            {% for s, n in dist.items() %}
+            <div class="d-flex align-items-center gap-2 small"><span style="width:28px">{{ s }}<i class="bi bi-star-fill text-warning"></i></span>
+              <div class="rating-bar flex-grow-1"><span style="width: {{ (n / p.review_count * 100) if p.review_count else 0 }}%"></span></div>
+              <span class="text-muted" style="width:20px">{{ n }}</span></div>
+            {% endfor %}
+          </div>
+        </div>
+
+        {% if can_review %}
+        <form method="post" action="{{ url_for('product.add_review', slug=p.slug) }}" class="border-top pt-3 mb-3">
+          {{ csrf() }}
+          <div class="fw-semibold mb-1">Bạn đã mua sản phẩm này – hãy để lại đánh giá</div>
+          <div class="star-input mb-2">
+            {% for s in range(5, 0, -1) %}<input type="radio" name="rating" id="r{{ s }}" value="{{ s }}" required><label for="r{{ s }}">★</label>{% endfor %}
+          </div>
+          <input class="form-control mb-2" name="title" maxlength="150" placeholder="Tiêu đề (không bắt buộc)">
+          <textarea class="form-control mb-2" name="content" rows="3" placeholder="Chia sẻ cảm nhận về độ tươi, chất lượng…"></textarea>
+          <button class="btn btn-coral btn-sm rounded-pill px-3">Gửi đánh giá</button>
+        </form>
+        {% elif my_review and my_review.status == 'pending' %}
+          <div class="alert alert-info small">Đánh giá của bạn đang chờ cửa hàng duyệt.</div>
+        {% elif g.user and not my_review %}
+          <div class="small text-muted mb-3"><i class="bi bi-info-circle me-1"></i>Chỉ khách đã mua và nhận hàng mới có thể đánh giá.</div>
+        {% endif %}
+
+        {% for r in reviews %}
+        <div class="border-top py-3">
+          <div class="d-flex justify-content-between"><b>{{ r.full_name }}</b><small class="text-muted">{{ r.created_at | dt('%d/%m/%Y') }}</small></div>
+          {{ stars(r.rating) }} {% if r.title %}<b class="small ms-1">{{ r.title }}</b>{% endif %}
+          {% if r.content %}<div class="small text-muted mt-1">{{ r.content }}</div>{% endif %}
+        </div>
+        {% else %}<div class="text-muted small">Chưa có đánh giá nào.</div>{% endfor %}
+      </div>
+    </div>
+  </div>
+
+  {% if related %}
+  <h4 class="section-title mt-5 mb-3"><small>Có thể bạn thích</small>Sản phẩm cùng loại</h4>
+  <div class="row g-3">{% for r in related %}<div class="col-6 col-lg-3">{{ product_card(r) }}</div>{% endfor %}</div>
+  {% endif %}
+</div>
+{% endblock %}

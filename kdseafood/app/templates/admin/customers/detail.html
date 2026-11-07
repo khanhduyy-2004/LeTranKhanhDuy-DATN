@@ -1,0 +1,47 @@
+{% extends "admin/base.html" %}
+{% from "partials/macros.html" import csrf, order_badge with context %}
+{% block title %}{{ u.full_name }}{% endblock %}
+{% block heading %}Khách hàng: {{ u.full_name }}{% endblock %}
+{% block content %}
+<a class="btn btn-sm btn-light mb-3" href="{{ url_for('admin.customers') }}"><i class="bi bi-arrow-left"></i> Danh sách</a>
+<div class="row g-3">
+  <div class="col-lg-4">
+    <div class="card-a p-3 text-center mb-3">
+      <img class="rounded-circle mb-2" style="width:90px;height:90px;object-fit:cover" src="{{ u.avatar_url | img('avatar') }}" alt="">
+      <h5 class="fw-bold mb-0">{{ u.full_name }}</h5><div class="text-muted small">@{{ u.username }}</div>
+      <div class="my-2">{% if u.is_active %}<span class="badge text-bg-success">Hoạt động</span>{% else %}<span class="badge text-bg-danger">Đã khóa</span>{% endif %}</div>
+      <div class="small text-start mt-3">
+        <div><i class="bi bi-envelope me-2"></i>{{ u.email }}</div>
+        <div><i class="bi bi-telephone me-2"></i>{{ u.phone or '—' }}</div>
+        <div><i class="bi bi-calendar me-2"></i>Đăng ký {{ u.created_at | dt('%d/%m/%Y') }}</div>
+        <div><i class="bi bi-clock-history me-2"></i>Đăng nhập gần nhất {{ u.last_login_at | dt if u.last_login_at else '—' }}</div>
+      </div>
+      <div class="d-grid gap-2 mt-3">
+        <form method="post" action="{{ url_for('admin.customer_toggle', uid=u.id) }}" data-confirm="Xác nhận?">{{ csrf() }}
+          <button class="btn w-100 {{ 'btn-outline-danger' if u.is_active else 'btn-outline-success' }}">{{ 'Khóa tài khoản' if u.is_active else 'Mở khóa tài khoản' }}</button></form>
+        <form method="post" action="{{ url_for('admin.customer_reset_password', uid=u.id) }}" data-confirm="Tạo mật khẩu mới cho khách hàng này?">{{ csrf() }}
+          <button class="btn btn-light w-100"><i class="bi bi-key me-1"></i>Đặt lại mật khẩu</button></form>
+      </div>
+    </div>
+    <div class="card-a p-3">
+      <h6 class="fw-bold">Sổ địa chỉ</h6>
+      {% for a in addresses %}<div class="small py-1 {{ 'border-top' if not loop.first }}"><b>{{ a.receiver_name }}</b> · {{ a.phone }}{% if a.is_default %} <span class="badge text-bg-info">Mặc định</span>{% endif %}<br>{{ a.address_line }}, {{ a.district }}, {{ a.province }}</div>
+      {% else %}<div class="small text-muted">Chưa có địa chỉ.</div>{% endfor %}
+    </div>
+  </div>
+  <div class="col-lg-8">
+    <div class="card-a">
+      <div class="p-3 pb-0"><h6 class="fw-bold">Lịch sử mua hàng ({{ counts.all }} đơn · {{ counts.delivered }} đã giao)</h6></div>
+      <div class="table-responsive"><table class="table mb-0">
+        <thead><tr><th>Mã đơn</th><th>Ngày đặt</th><th class="text-center">SP</th><th class="text-end">Tổng tiền</th><th>Trạng thái</th></tr></thead>
+        <tbody>
+        {% for o in orders %}
+          <tr><td><a class="fw-semibold" href="{{ url_for('admin.order_detail', oid=o.id) }}">{{ o.order_code }}</a></td><td>{{ o.created_at | dt }}</td>
+            <td class="text-center">{{ o.item_count }}</td><td class="text-end">{{ o.total_amount | vnd }}</td><td>{{ order_badge(o.status) }}</td></tr>
+        {% else %}<tr><td colspan="5" class="text-muted text-center py-3">Chưa có đơn hàng.</td></tr>{% endfor %}
+        </tbody>
+      </table></div>
+    </div>
+  </div>
+</div>
+{% endblock %}

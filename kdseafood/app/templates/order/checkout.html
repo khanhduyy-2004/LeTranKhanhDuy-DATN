@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% from "partials/macros.html" import csrf with context %}
+{% block title %}Thanh toán{% endblock %}
+{% block content %}
+<div class="container">
+  <h3 class="section-title mb-4"><small>Bước 2/3</small>Thông tin đặt hàng</h3>
+  <form method="post" class="row g-4">
+    {{ csrf() }}
+    <div class="col-lg-7">
+      <div class="card-soft p-4 mb-4">
+        <h5 class="fw-bold mb-3"><i class="bi bi-geo-alt text-coral me-2"></i>Địa chỉ nhận hàng</h5>
+        <div class="row g-2 mb-3">
+          {% for a in addresses %}
+          <div class="col-md-6">
+            <label class="addr-option">
+              <input class="form-check-input me-1" type="radio" name="address_id" value="{{ a.id }}" {{ 'checked' if a.is_default }}>
+              <b>{{ a.receiver_name }}</b> · {{ a.phone }} {% if a.is_default %}<span class="badge text-bg-info ms-1">Mặc định</span>{% endif %}
+              <div class="small text-muted mt-1">{{ a.address_line }}, {{ a.ward }}, {{ a.district }}, {{ a.province }}</div>
+            </label>
+          </div>
+          {% endfor %}
+          <div class="col-12">
+            <label class="addr-option">
+              <input class="form-check-input me-1" type="radio" name="address_id" value="" id="newAddr" {{ 'checked' if not addresses }}>
+              <b>Giao đến địa chỉ khác</b>
+            </label>
+          </div>
+        </div>
+        <div id="newAddrForm" class="row g-2">
+          <div class="col-md-6"><input class="form-control" name="receiver_name" placeholder="Họ tên người nhận *" value="{{ form.receiver_name or g.user.full_name }}"></div>
+          <div class="col-md-6"><input class="form-control" name="phone" placeholder="Số điện thoại *" value="{{ form.phone or g.user.phone or '' }}"></div>
+          <div class="col-12"><input class="form-control" name="address_line" placeholder="Số nhà, tên đường *" value="{{ form.address_line }}"></div>
+          <div class="col-md-4"><input class="form-control" name="ward" placeholder="Phường / Xã" value="{{ form.ward }}"></div>
+          <div class="col-md-4"><input class="form-control" name="district" placeholder="Quận / Huyện" value="{{ form.district }}"></div>
+          <div class="col-md-4"><input class="form-control" name="province" placeholder="Tỉnh / Thành phố *" value="{{ form.province }}"></div>
+          <div class="col-12 form-check ms-1"><input class="form-check-input" type="checkbox" name="save_address" value="1" id="saveAddr" checked>
+            <label class="form-check-label small" for="saveAddr">Lưu vào sổ địa chỉ</label></div>
+        </div>
+      </div>
+
+      <div class="card-soft p-4 mb-4">
+        <h5 class="fw-bold mb-3"><i class="bi bi-credit-card text-coral me-2"></i>Phương thức thanh toán</h5>
+        {% for key, label in PAYMENT_METHOD.items() %}
+        <label class="pay-option mb-2">
+          <input class="form-check-input me-2" type="radio" name="payment_method" value="{{ key }}" {{ 'checked' if (form.payment_method or 'cod') == key }}>
+          <b>{{ label }}</b>
+          <div class="small text-muted ms-4">
+            {% if key == 'cod' %}Thanh toán tiền mặt cho nhân viên giao hàng.
+            {% elif key == 'bank_transfer' %}Chuyển khoản tới STK 0123 456 789 – Vietcombank – KDSEAFOOD, nội dung: mã đơn hàng.
+            {% else %}Chuyển tới cổng thanh toán mô phỏng, không phát sinh giao dịch thật.{% endif %}</div>
+        </label>
+        {% endfor %}
+      </div>
+
+      <div class="card-soft p-4">
+        <h5 class="fw-bold mb-3"><i class="bi bi-chat-left-text text-coral me-2"></i>Ghi chú</h5>
+        <textarea class="form-control" name="note" rows="2" maxlength="500" placeholder="VD: giao sau 17h, sơ chế sẵn…">{{ form.note }}</textarea>
+      </div>
+    </div>
+
+    <div class="col-lg-5">
+      <div class="card-soft p-4 summary-card">
+        <h5 class="fw-bold mb-3">Đơn hàng ({{ items | length }} sản phẩm)</h5>
+        {% for it in items %}
+        <div class="d-flex gap-2 align-items-center mb-2">
+          <img src="{{ it.image | img }}" alt="" style="width:52px;height:52px;object-fit:cover;border-radius:10px">
+          <div class="flex-grow-1 small"><div class="fw-semibold">{{ it.name }}</div><div class="text-muted">{{ it.quantity | qty }} {{ it.unit }} × {{ it.price | vnd }}</div></div>
+          <b class="small">{{ it.line_total | vnd }}</b>
+        </div>
+        {% endfor %}
+        <hr>
+        <div class="d-flex justify-content-between mb-2"><span>Tạm tính</span><b>{{ summary.subtotal | vnd }}</b></div>
+        <div class="d-flex justify-content-between mb-2"><span>Phí giao hàng</span><b>{{ summary.shipping_fee | vnd if summary.shipping_fee else 'Miễn phí' }}</b></div>
+        <hr>
+        <div class="d-flex justify-content-between mb-3 fs-5"><span class="fw-bold">Tổng thanh toán</span><b class="text-coral">{{ summary.total | vnd }}</b></div>
+        <button class="btn btn-coral w-100 btn-lg rounded-pill">Đặt hàng</button>
+        <a href="{{ url_for('cart.view') }}" class="btn btn-link w-100 mt-1">Quay lại giỏ hàng</a>
+      </div>
+    </div>
+  </form>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+  const toggleAddr = () => {
+    const isNew = document.getElementById('newAddr').checked;
+    document.getElementById('newAddrForm').style.display = isNew ? '' : 'none';
+  };
+  document.querySelectorAll('input[name=address_id]').forEach(r => r.addEventListener('change', toggleAddr));
+  toggleAddr();
+</script>
+{% endblock %}

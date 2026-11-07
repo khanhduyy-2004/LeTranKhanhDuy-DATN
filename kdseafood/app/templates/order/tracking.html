@@ -1,0 +1,90 @@
+{% extends "account/_layout.html" %}
+{% from "partials/macros.html" import order_badge, pay_badge, csrf with context %}
+{% block title %}Đơn hàng {{ o.order_code }}{% endblock %}
+{% set active = 'orders' %}
+{% block account %}
+<div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+  <h4 class="fw-bold mb-0">Đơn hàng {{ o.order_code }}</h4>
+  <div>{{ order_badge(o.status) }} {{ pay_badge(o.payment_status) }}</div>
+</div>
+
+{% if o.status != 'cancelled' %}
+{% set cur = ORDER_FLOW.index(o.status) %}
+<div class="card-soft p-4 mb-3">
+  <div class="steps">
+    {% for s in ORDER_FLOW %}
+    <div class="step {{ 'done' if loop.index0 <= cur }}">
+      <div class="dot">{% if loop.index0 <= cur %}<i class="bi bi-check-lg"></i>{% else %}{{ loop.index }}{% endif %}</div>{{ ORDER_STATUS[s][0] }}</div>
+    {% endfor %}
+  </div>
+</div>
+{% else %}
+<div class="alert alert-secondary">Đơn hàng đã hủy{% if o.cancel_reason %}: {{ o.cancel_reason }}{% endif %}.</div>
+{% endif %}
+
+<div class="row g-3">
+  <div class="col-md-7">
+    <div class="card-soft p-3 h-100">
+      <h6 class="fw-bold">Sản phẩm</h6>
+      {% for it in items %}
+      <div class="d-flex gap-2 align-items-center py-2 {{ 'border-top' if not loop.first }}">
+        <img src="{{ it.image | img }}" alt="" style="width:52px;height:52px;object-fit:cover;border-radius:10px">
+        <div class="flex-grow-1 small">
+          {% if it.slug %}<a class="fw-semibold text-dark" href="{{ url_for('product.detail', slug=it.slug) }}">{{ it.product_name }}</a>{% else %}<span class="fw-semibold">{{ it.product_name }}</span>{% endif %}
+          <div class="text-muted">{{ it.quantity | qty }} {{ it.unit }} × {{ it.unit_price | vnd }}</div></div>
+        <b class="small">{{ it.line_total | vnd }}</b>
+      </div>
+      {% endfor %}
+      <hr>
+      <div class="d-flex justify-content-between small"><span>Tạm tính</span><span>{{ o.subtotal | vnd }}</span></div>
+      <div class="d-flex justify-content-between small"><span>Phí giao hàng</span><span>{{ o.shipping_fee | vnd if o.shipping_fee else 'Miễn phí' }}</span></div>
+      <div class="d-flex justify-content-between fw-bold mt-1"><span>Tổng cộng</span><span class="text-coral">{{ o.total_amount | vnd }}</span></div>
+    </div>
+  </div>
+  <div class="col-md-5">
+    <div class="card-soft p-3 mb-3">
+      <h6 class="fw-bold">Giao đến</h6>
+      <div class="small"><b>{{ o.receiver_name }}</b> · {{ o.receiver_phone }}<br>{{ o.shipping_address }}</div>
+      <div class="small text-muted mt-2">{{ PAYMENT_METHOD[o.payment_method] }}</div>
+      {% if o.note %}<div class="small mt-2"><i class="bi bi-chat-left-text me-1"></i>{{ o.note }}</div>{% endif %}
+    </div>
+    <div class="card-soft p-3">
+      <h6 class="fw-bold">Lịch sử đơn hàng</h6>
+      <div class="timeline small">
+        {% for h in history %}
+        <div class="ev"><b>{{ ORDER_STATUS[h.new_status][0] }}</b> <span class="text-muted">· {{ h.created_at | dt }}</span>
+          {% if h.note %}<div class="text-muted">{{ h.note }}</div>{% endif %}</div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="d-flex gap-2 mt-3">
+  <a href="{{ url_for('order.my_orders') }}" class="btn btn-light rounded-pill"><i class="bi bi-arrow-left me-1"></i>Danh sách đơn</a>
+  {% if o.status == 'pending' %}
+  <button class="btn btn-outline-danger rounded-pill" data-bs-toggle="modal" data-bs-target="#cancelModal">Hủy đơn hàng</button>
+  {% endif %}
+  {% if o.payment_method == 'vnpay_sandbox' and o.payment_status == 'unpaid' and o.status != 'cancelled' %}
+  <a href="{{ url_for('order.sandbox_pay', code=o.order_code) }}" class="btn btn-coral rounded-pill">Thanh toán ngay</a>
+  {% endif %}
+</div>
+
+{% if o.status == 'pending' %}
+<div class="modal fade" id="cancelModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content">
+  <form method="post" action="{{ url_for('order.cancel', code=o.order_code) }}">
+    {{ csrf() }}
+    <div class="modal-header"><h5 class="modal-title">Hủy đơn {{ o.order_code }}</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+    <div class="modal-body">
+      <label class="form-label">Lý do hủy</label>
+      <select class="form-select" name="reason">
+        <option>Tôi muốn đổi sản phẩm / số lượng</option><option>Tôi muốn đổi địa chỉ giao hàng</option>
+        <option>Tôi không còn nhu cầu</option><option>Lý do khác</option>
+      </select>
+    </div>
+    <div class="modal-footer"><button type="button" class="btn btn-light" data-bs-dismiss="modal">Không</button>
+      <button class="btn btn-danger">Xác nhận hủy</button></div>
+  </form>
+</div></div></div>
+{% endif %}
+{% endblock %}

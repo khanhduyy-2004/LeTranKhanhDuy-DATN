@@ -1,0 +1,35 @@
+/* ================= KDSeaFood – trang quản trị ================= */
+:root { --ocean: #0b3b5c; --sea: #1c8fc2; --coral: #ef5b3b; --bg: #f3f6f9; --line: #e3e8ee; }
+body { font-family: "Be Vietnam Pro", system-ui, sans-serif; background: var(--bg); font-size: 14px; color: #1d2a35; }
+.sidebar { width: 250px; min-height: 100vh; background: var(--ocean); position: fixed; top: 0; left: 0; z-index: 1040; transition: .25s; }
+.sidebar .logo { color: #fff; font-weight: 800; font-size: 22px; padding: 20px 22px; display: block; }
+.sidebar .logo span { color: var(--coral); }
+.sidebar .nav-link { color: #b9d3e4; padding: 10px 22px; display: flex; align-items: center; gap: 10px; border-left: 3px solid transparent; }
+.sidebar .nav-link:hover { color: #fff; background: rgba(255,255,255,.05); }
+.sidebar .nav-link.active { color: #fff; background: rgba(255,255,255,.1); border-left-color: var(--coral); font-weight: 600; }
+.sidebar .label { color: #6f97b3; font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; padding: 18px 22px 6px; }
+.main { margin-left: 250px; min-height: 100vh; }
+.topnav { background: #fff; border-bottom: 1px solid var(--line); padding: 12px 24px; position: sticky; top: 0; z-index: 1030; }
+.content { padding: 24px; }
+.card-a { background: #fff; border: 1px solid var(--line); border-radius: 14px; }
+.stat { padding: 18px; display: flex; gap: 14px; align-items: center; }
+.stat .ico { width: 48px; height: 48px; border-radius: 12px; display: grid; place-items: center; font-size: 22px; }
+.stat .val { font-size: 22px; font-weight: 800; line-height: 1.2; }
+.stat small { color: #6b7a88; }
+.table > :not(caption) > * > * { padding: .7rem .75rem; vertical-align: middle; }
+.table thead th { font-size: 12px; text-transform: uppercase; color: #6b7a88; font-weight: 600; background: #f8fafc; }
+.thumb-sm { width: 44px; height: 44px; object-fit: cover; border-radius: 8px; background: #e8f4fa; }
+.btn-coral { background: var(--coral); border-color: var(--coral); color: #fff; }
+.btn-coral:hover { background: #d4462a; color: #fff; }
+.btn-ocean { background: var(--ocean); border-color: var(--ocean); color: #fff; }
+.btn-ocean:hover { background: #0f5480; color: #fff; }
+.status-pills a { border-radius: 999px; }
+.img-tile { position: relative; width: 120px; }
+.img-tile img { width: 120px; height: 120px; object-fit: cover; border-radius: 10px; border: 2px solid transparent; }
+.img-tile.primary img { border-color: var(--coral); }
+.timeline { border-left: 2px solid var(--line); padding-left: 18px; }
+.timeline .ev { position: relative; padding-bottom: 14px; }
+.timeline .ev::before { content: ""; position: absolute; left: -24px; top: 5px; width: 10px; height: 10px; border-radius: 50%; background: var(--sea); }
+@media (max-width: 991.98px) {
+  .sidebar { left: -250px; } .sidebar.show { left: 0; } .main { margin-left: 0; }
+}

@@ -1,0 +1,40 @@
+{% extends "admin/base.html" %}
+{% from "partials/macros.html" import order_badge, pay_badge, paginate with context %}
+{% block title %}Đơn hàng{% endblock %}
+{% block heading %}Quản lý đơn hàng{% endblock %}
+{% block content %}
+{% set cur = args.get('trang-thai') %}
+<div class="d-flex flex-wrap gap-2 mb-3 status-pills">
+  <a class="btn btn-sm {{ 'btn-ocean' if not cur else 'btn-light' }}" href="{{ url_for('admin.orders') }}">Tất cả <span class="badge text-bg-light">{{ counts.all }}</span></a>
+  {% for key, (label, color) in ORDER_STATUS.items() %}
+  <a class="btn btn-sm {{ 'btn-ocean' if cur == key else 'btn-light' }}" href="{{ url_for('admin.orders', **{'trang-thai': key}) }}">{{ label }} <span class="badge text-bg-{{ color }}">{{ counts[key] }}</span></a>
+  {% endfor %}
+</div>
+<form class="card-a p-3 mb-3 row g-2 align-items-end" method="get">
+  {% if cur %}<input type="hidden" name="trang-thai" value="{{ cur }}">{% endif %}
+  <div class="col-md-4"><label class="form-label small">Từ khóa</label><input class="form-control" name="q" value="{{ args.get('q', '') }}" placeholder="Mã đơn, tên, số điện thoại…"></div>
+  <div class="col-md-3"><label class="form-label small">Từ ngày</label><input class="form-control" type="date" name="tu-ngay" value="{{ args.get('tu-ngay', '') }}"></div>
+  <div class="col-md-3"><label class="form-label small">Đến ngày</label><input class="form-control" type="date" name="den-ngay" value="{{ args.get('den-ngay', '') }}"></div>
+  <div class="col-md-2 d-grid"><button class="btn btn-ocean"><i class="bi bi-search"></i> Tìm</button></div>
+</form>
+<div class="card-a table-responsive">
+  <table class="table table-hover mb-0">
+    <thead><tr><th>Mã đơn</th><th>Khách hàng</th><th>Người nhận</th><th>Ngày đặt</th><th class="text-center">SP</th><th class="text-end">Tổng tiền</th><th>Thanh toán</th><th>Trạng thái</th></tr></thead>
+    <tbody>
+    {% for o in orders %}
+      <tr style="cursor:pointer" onclick="location='{{ url_for('admin.order_detail', oid=o.id) }}'">
+        <td><a class="fw-semibold" href="{{ url_for('admin.order_detail', oid=o.id) }}">{{ o.order_code }}</a></td>
+        <td>{{ o.customer_name }}</td>
+        <td>{{ o.receiver_name }}<div class="small text-muted">{{ o.receiver_phone }}</div></td>
+        <td>{{ o.created_at | dt }}</td>
+        <td class="text-center">{{ o.item_count }}</td>
+        <td class="text-end fw-semibold">{{ o.total_amount | vnd }}</td>
+        <td>{{ pay_badge(o.payment_status) }}<div class="small text-muted">{{ o.payment_method | upper }}</div></td>
+        <td>{{ order_badge(o.status) }}</td>
+      </tr>
+    {% else %}<tr><td colspan="8" class="text-center text-muted py-4">Không có đơn hàng phù hợp.</td></tr>{% endfor %}
+    </tbody>
+  </table>
+</div>
+<div class="d-flex justify-content-between align-items-center"><span class="small text-muted mt-3">{{ total }} đơn hàng</span>{{ paginate(pagination, 'admin.orders') }}</div>
+{% endblock %}

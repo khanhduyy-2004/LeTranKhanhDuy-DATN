@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% from "partials/macros.html" import pay_badge with context %}
+{% block title %}Đặt hàng thành công{% endblock %}
+{% block content %}
+<div class="container" style="max-width: 720px">
+  <div class="card-soft p-4 p-md-5 text-center">
+    <div class="display-3 text-success mb-2"><i class="bi bi-check-circle-fill"></i></div>
+    <h3 class="fw-bold">Đặt hàng thành công!</h3>
+    <p class="text-muted">Cảm ơn bạn đã tin chọn KDSeaFood. Cửa hàng sẽ gọi xác nhận trong ít phút.</p>
+    <div class="bg-foam rounded-3 p-3 my-3 text-start">
+      <div class="d-flex justify-content-between"><span>Mã đơn hàng</span><b>{{ o.order_code }}</b></div>
+      <div class="d-flex justify-content-between"><span>Người nhận</span><b>{{ o.receiver_name }} · {{ o.receiver_phone }}</b></div>
+      <div class="d-flex justify-content-between"><span>Thanh toán</span><span>{{ PAYMENT_METHOD[o.payment_method] }} {{ pay_badge(o.payment_status) }}</span></div>
+      <div class="d-flex justify-content-between"><span>Tổng tiền</span><b class="text-coral">{{ o.total_amount | vnd }}</b></div>
+    </div>
+    {% if o.payment_method == 'bank_transfer' and o.payment_status == 'unpaid' %}
+    <div class="alert alert-info text-start small">Vui lòng chuyển khoản <b>{{ o.total_amount | vnd }}</b> tới STK <b>0123 456 789 – Vietcombank – KDSEAFOOD</b>, nội dung: <b>{{ o.order_code }}</b>.</div>
+    {% endif %}
+    <div class="d-flex gap-2 justify-content-center">
+      <a href="{{ url_for('order.tracking', code=o.order_code) }}" class="btn btn-ocean rounded-pill">Theo dõi đơn hàng</a>
+      <a href="{{ url_for('product.listing') }}" class="btn btn-light rounded-pill">Tiếp tục mua sắm</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

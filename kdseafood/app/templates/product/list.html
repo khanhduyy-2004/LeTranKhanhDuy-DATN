@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% from "partials/macros.html" import product_card, paginate, stars with context %}
+{% block title %}{{ current_cat.name if current_cat else ('Tìm: ' ~ keyword if keyword else 'Tất cả sản phẩm') }}{% endblock %}
+{% block content %}
+{% set base = request.args.to_dict() %}
+<div class="container">
+  <div class="page-head mb-4 d-flex flex-wrap justify-content-between align-items-center gap-2">
+    <div>
+      <nav class="small"><a href="{{ url_for('main.home') }}">Trang chủ</a> / Sản phẩm</nav>
+      <h3 class="section-title mt-1">
+        {% if keyword %}Kết quả cho “{{ keyword }}”{% elif current_cat %}{{ current_cat.name }}{% else %}Tất cả sản phẩm{% endif %}</h3>
+      {% if current_cat and current_cat.description %}<div class="text-muted small">{{ current_cat.description }}</div>{% endif %}
+    </div>
+    <div class="text-muted">Tìm thấy <b class="text-dark">{{ total }}</b> sản phẩm</div>
+  </div>
+
+  <div class="row g-4">
+    <!-- Bộ lọc -->
+    <aside class="col-lg-3">
+      <form class="filter-card" method="get" action="{{ url_for('product.listing') }}">
+        {% if keyword %}<input type="hidden" name="q" value="{{ keyword }}">{% endif %}
+        <input type="hidden" name="sap-xep" value="{{ sort }}">
+        <h6>Danh mục</h6>
+        <div class="list-group mb-3">
+          <label class="list-group-item {{ 'active' if not current_cat }}"><input class="form-check-input me-2" type="radio" name="danh-muc" value="" {{ 'checked' if not current_cat }} onchange="this.form.submit()">Tất cả</label>
+          {% for c in categories %}
+          <label class="list-group-item {{ 'active' if current_cat and current_cat.id == c.id }}">
+            <input class="form-check-input me-2" type="radio" name="danh-muc" value="{{ c.slug }}" {{ 'checked' if current_cat and current_cat.id == c.id }} onchange="this.form.submit()">{{ c.name }}</label>
+          {% endfor %}
+        </div>
+
+        <h6>Khoảng giá (₫)</h6>
+        <div class="d-flex gap-2 mb-2">
+          <input class="form-control form-control-sm" type="number" name="min" min="0" step="10000" placeholder="Từ" value="{{ min_price | int if min_price is not none }}">
+          <input class="form-control form-control-sm" type="number" name="max" min="0" step="10000" placeholder="Đến" value="{{ max_price | int if max_price is not none }}">
+        </div>
+        <div class="d-flex flex-wrap gap-1 mb-3">
+          {% for lo, hi, label in [(0, 300000, '< 300k'), (300000, 600000, '300k – 600k'), (600000, none, '> 600k')] %}
+          <a class="badge rounded-pill text-bg-light border" href="{{ url_for('product.listing', **dict(base, min=lo, max=(hi if hi else ''), page=1)) }}">{{ label }}</a>
+          {% endfor %}
+        </div>
+
+        <h6>Đánh giá</h6>
+        <div class="mb-3">
+          {% for s in [4, 3] %}
+          <div class="form-check"><input class="form-check-input" type="radio" name="sao" id="sao{{ s }}" value="{{ s }}" {{ 'checked' if rating == s }} onchange="this.form.submit()">
+            <label class="form-check-label" for="sao{{ s }}">{{ stars(s) }} trở lên</label></div>
+          {% endfor %}
+          <div class="form-check"><input class="form-check-input" type="radio" name="sao" id="sao0" value="" {{ 'checked' if not rating }} onchange="this.form.submit()">
+            <label class="form-check-label" for="sao0">Tất cả</label></div>
+        </div>
+
+        <div class="form-check form-switch mb-3">
+          <input class="form-check-input" type="checkbox" name="con-hang" value="1" id="instock" {{ 'checked' if in_stock }} onchange="this.form.submit()">
+          <label class="form-check-label" for="instock">Chỉ hiện còn hàng</label>
+        </div>
+        <button class="btn btn-ocean w-100 mb-2">Áp dụng</button>
+        <a class="btn btn-light w-100" href="{{ url_for('product.listing') }}">Xóa bộ lọc</a>
+      </form>
+    </aside>
+
+    <!-- Danh sách -->
+    <section class="col-lg-9">
+      <div class="d-flex flex-wrap gap-2 align-items-center mb-3">
+        <span class="text-muted small me-1">Sắp xếp:</span>
+        {% for key, (label, _) in sorts.items() %}
+        <a class="btn btn-sm rounded-pill {{ 'btn-ocean' if sort == key else 'btn-light' }}" href="{{ url_for('product.listing', **dict(base, **{'sap-xep': key, 'page': 1})) }}">{{ label }}</a>
+        {% endfor %}
+      </div>
+      {% if products %}
+        <div class="row g-3">
+          {% for p in products %}<div class="col-6 col-md-4">{{ product_card(p) }}</div>{% endfor %}
+        </div>
+        {{ paginate(pagination, 'product.listing') }}
+      {% else %}
+        <div class="empty-state card-soft"><i class="bi bi-search"></i>
+          <p class="mt-3">Không tìm thấy sản phẩm phù hợp. Thử bỏ bớt bộ lọc nhé.</p>
+          <a class="btn btn-coral rounded-pill" href="{{ url_for('product.listing') }}">Xem tất cả sản phẩm</a></div>
+      {% endif %}
+    </section>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,95 @@
+{% extends "admin/base.html" %}
+{% from "partials/macros.html" import order_badge with context %}
+{% block title %}Tổng quan{% endblock %}
+{% block heading %}Tổng quan kinh doanh{% endblock %}
+{% block content %}
+<div class="row g-3 mb-3">
+  {% set diff = s.revenue_month - s.revenue_last_month %}
+  {% for icon, color, label, value, sub in [
+      ('bi-cash-stack', 'success', 'Doanh thu hôm nay', s.revenue_today | vnd, s.orders_today ~ ' đơn mới hôm nay'),
+      ('bi-graph-up-arrow', 'primary', 'Doanh thu tháng này', s.revenue_month | vnd, ('Tháng trước: ' ~ (s.revenue_last_month | vnd))),
+      ('bi-receipt', 'warning', 'Đơn chờ xác nhận', counts.pending, counts.all ~ ' đơn tổng cộng'),
+      ('bi-people', 'info', 'Khách hàng', total_customers, total_products ~ ' sản phẩm · đã bán ' ~ (s.sold_quantity | qty)) ] %}
+  <div class="col-sm-6 col-xl-3">
+    <div class="card-a stat"><div class="ico bg-{{ color }}-subtle text-{{ color }}"><i class="bi {{ icon }}"></i></div>
+      <div><small>{{ label }}</small><div class="val">{{ value }}</div><small>{{ sub }}</small></div></div>
+  </div>
+  {% endfor %}
+</div>
+
+<div class="row g-3 mb-3">
+  <div class="col-xl-8">
+    <div class="card-a p-3 h-100">
+      <div class="d-flex justify-content-between"><h6 class="fw-bold">Doanh thu 12 tháng gần nhất</h6>
+        <span class="small text-muted">Tổng: <b class="text-dark">{{ s.revenue_total | vnd }}</b></span></div>
+      <canvas id="revChart" height="110"></canvas>
+    </div>
+  </div>
+  <div class="col-xl-4">
+    <div class="card-a p-3 h-100">
+      <h6 class="fw-bold">Đơn hàng theo trạng thái</h6>
+      <canvas id="statusChart" height="200"></canvas>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="col-xl-8">
+    <div class="card-a">
+      <div class="d-flex justify-content-between p-3 pb-0"><h6 class="fw-bold">Đơn hàng gần đây</h6><a href="{{ url_for('admin.orders') }}" class="small">Xem tất cả</a></div>
+      <div class="table-responsive"><table class="table mb-0">
+        <thead><tr><th>Mã đơn</th><th>Khách hàng</th><th>Ngày đặt</th><th class="text-end">Tổng tiền</th><th>Trạng thái</th></tr></thead>
+        <tbody>
+        {% for o in recent %}
+          <tr><td><a href="{{ url_for('admin.order_detail', oid=o.id) }}" class="fw-semibold">{{ o.order_code }}</a></td>
+            <td>{{ o.customer_name }}</td><td>{{ o.created_at | dt }}</td><td class="text-end">{{ o.total_amount | vnd }}</td><td>{{ order_badge(o.status) }}</td></tr>
+        {% endfor %}
+        </tbody></table></div>
+    </div>
+  </div>
+  <div class="col-xl-4">
+    <div class="card-a p-3 mb-3">
+      <h6 class="fw-bold">Top sản phẩm bán chạy</h6>
+      {% for b in best %}
+        <div class="d-flex justify-content-between py-2 {{ 'border-top' if not loop.first }}"><span>{{ loop.index }}. {{ b.name }}</span>
+          <span class="text-muted small text-end">{{ b.total_sold | qty }} {{ b.unit }}<br><b class="text-dark">{{ b.total_revenue | vnd }}</b></span></div>
+      {% else %}<div class="text-muted small">Chưa có dữ liệu.</div>{% endfor %}
+    </div>
+    <div class="card-a p-3">
+      <h6 class="fw-bold text-danger"><i class="bi bi-exclamation-triangle me-1"></i>Sắp hết hàng</h6>
+      {% for p in low %}
+        <div class="d-flex justify-content-between py-1"><a href="{{ url_for('admin.product_edit', pid=p.id) }}">{{ p.name }}</a>
+          <span class="badge text-bg-{{ 'danger' if p.stock_quantity <= 0 else 'warning' }}">{{ p.stock_quantity | qty }} {{ p.unit }}</span></div>
+      {% else %}<div class="text-muted small">Tồn kho ổn định.</div>{% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='vendor/chartjs/chart.umd.min.js') }}"></script>
+<script>
+  const monthly = {{ monthly | tojson }};
+  new Chart(document.getElementById('revChart'), {
+    data: {
+      labels: monthly.map(m => m.label),
+      datasets: [
+        { type: 'bar', label: 'Doanh thu (₫)', data: monthly.map(m => m.revenue), backgroundColor: '#1c8fc2', borderRadius: 6, yAxisID: 'y' },
+        { type: 'line', label: 'Số đơn đã giao', data: monthly.map(m => m.orders), borderColor: '#ef5b3b', backgroundColor: '#ef5b3b', tension: .3, yAxisID: 'y1' },
+      ]
+    },
+    options: {
+      plugins: { tooltip: { callbacks: { label: c => c.dataset.yAxisID === 'y' ? c.raw.toLocaleString('vi-VN') + '₫' : c.raw + ' đơn' } } },
+      scales: { y: { ticks: { callback: v => (v / 1e6) + 'tr' } }, y1: { position: 'right', grid: { drawOnChartArea: false }, ticks: { precision: 0 } } }
+    }
+  });
+  const statusLabels = {{ ORDER_STATUS | tojson }};
+  const counts = {{ counts | tojson }};
+  const keys = Object.keys(statusLabels);
+  new Chart(document.getElementById('statusChart'), {
+    type: 'doughnut',
+    data: { labels: keys.map(k => statusLabels[k][0]), datasets: [{ data: keys.map(k => counts[k]),
+      backgroundColor: ['#f5a623', '#36b9cc', '#1c8fc2', '#0b3b5c', '#2bb673', '#adb5bd'] }] },
+    options: { plugins: { legend: { position: 'bottom', labels: { boxWidth: 12 } } }, cutout: '62%' }
+  });
+</script>
+{% endblock %}

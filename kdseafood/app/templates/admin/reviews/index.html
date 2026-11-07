@@ -1,0 +1,28 @@
+{% extends "admin/base.html" %}
+{% from "partials/macros.html" import csrf, stars, paginate with context %}
+{% block title %}Đánh giá{% endblock %}
+{% block heading %}Duyệt đánh giá sản phẩm{% endblock %}
+{% block content %}
+<div class="d-flex gap-2 mb-3 status-pills">
+  {% for key, label in [('pending', 'Chờ duyệt'), ('approved', 'Đã duyệt'), ('rejected', 'Từ chối'), ('all', 'Tất cả')] %}
+  <a class="btn btn-sm {{ 'btn-ocean' if status == key else 'btn-light' }}" href="{{ url_for('admin.reviews', **{'trang-thai': key}) }}">{{ label }}</a>
+  {% endfor %}
+</div>
+{% for r in reviews %}
+<div class="card-a p-3 mb-2">
+  <div class="d-flex justify-content-between flex-wrap gap-2">
+    <div><b>{{ r.full_name }}</b> đánh giá <a href="{{ url_for('product.detail', slug=r.slug) }}" target="_blank">{{ r.product_name }}</a>
+      <span class="text-muted small">· {{ r.created_at | dt }}</span></div>
+    <span class="badge text-bg-{{ REVIEW_STATUS[r.status][1] }}">{{ REVIEW_STATUS[r.status][0] }}</span>
+  </div>
+  <div class="my-1">{{ stars(r.rating) }} {% if r.title %}<b>{{ r.title }}</b>{% endif %}</div>
+  {% if r.content %}<div class="text-muted">{{ r.content }}</div>{% endif %}
+  <div class="d-flex gap-2 mt-2">
+    {% if r.status != 'approved' %}<form method="post" action="{{ url_for('admin.review_action', rid=r.id, action='duyet') }}">{{ csrf() }}<button class="btn btn-sm btn-success"><i class="bi bi-check-lg"></i> Duyệt</button></form>{% endif %}
+    {% if r.status != 'rejected' %}<form method="post" action="{{ url_for('admin.review_action', rid=r.id, action='tu-choi') }}">{{ csrf() }}<button class="btn btn-sm btn-outline-warning">Từ chối</button></form>{% endif %}
+    <form method="post" action="{{ url_for('admin.review_action', rid=r.id, action='xoa') }}" data-confirm="Xóa đánh giá này?">{{ csrf() }}<button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button></form>
+  </div>
+</div>
+{% else %}<div class="card-a p-4 text-center text-muted">Không có đánh giá.</div>{% endfor %}
+{{ paginate(pagination, 'admin.reviews') }}
+{% endblock %}

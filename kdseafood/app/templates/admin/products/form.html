@@ -1,0 +1,56 @@
+{% extends "admin/base.html" %}
+{% from "partials/macros.html" import csrf with context %}
+{% block title %}{{ 'Sửa sản phẩm' if p.id else 'Thêm sản phẩm' }}{% endblock %}
+{% block heading %}{{ 'Sửa: ' ~ p.name if p.id else 'Thêm sản phẩm mới' }}{% endblock %}
+{% block content %}
+<form method="post" enctype="multipart/form-data" class="row g-3">
+  {{ csrf() }}
+  <div class="col-lg-8">
+    <div class="card-a p-3 mb-3">
+      <div class="row g-3">
+        <div class="col-md-8"><label class="form-label">Tên sản phẩm *</label><input class="form-control" name="name" value="{{ p.name or '' }}" required></div>
+        <div class="col-md-4"><label class="form-label">Danh mục *</label>
+          <select class="form-select" name="category_id" required><option value="">-- Chọn --</option>
+            {% for c in categories %}<option value="{{ c.id }}" {{ 'selected' if p.category_id == c.id }}>{{ c.name }}</option>{% endfor %}</select></div>
+        <div class="col-md-4"><label class="form-label">Giá bán (₫) *</label><input class="form-control" type="number" min="0" step="1000" name="price" value="{{ p.price | int if p.price else '' }}" required></div>
+        <div class="col-md-4"><label class="form-label">Đơn vị tính *</label>
+          <input class="form-control" name="unit" list="units" value="{{ p.unit or 'kg' }}" required>
+          <datalist id="units"><option>kg</option><option>con</option><option>hộp</option><option>khay</option><option>túi</option></datalist></div>
+        <div class="col-md-4"><label class="form-label">Số lượng tồn *</label><input class="form-control" type="number" min="0" step="0.01" name="stock_quantity" value="{{ '%g' | format(p.stock_quantity | float) if p.stock_quantity else 0 }}" required></div>
+        <div class="col-12"><label class="form-label">Xuất xứ</label><input class="form-control" name="origin" value="{{ p.origin or '' }}" placeholder="VD: Nha Trang, Khánh Hòa"></div>
+        <div class="col-12"><label class="form-label">Mô tả ngắn</label><input class="form-control" name="short_desc" maxlength="255" value="{{ p.short_desc or '' }}"></div>
+        <div class="col-12"><label class="form-label">Mô tả chi tiết</label><textarea class="form-control" name="description" rows="6">{{ p.description or '' }}</textarea></div>
+      </div>
+    </div>
+    <div class="card-a p-3">
+      <h6 class="fw-bold">Hình ảnh</h6>
+      {% if images %}
+      <div class="d-flex flex-wrap gap-3 mb-3">
+        {% for im in images %}
+        <div class="img-tile {{ 'primary' if im.is_primary }}">
+          <img src="{{ im.image_url | img }}" alt="">
+          <div class="d-flex gap-1 mt-1">
+            {% if im.is_primary %}<span class="badge text-bg-danger">Ảnh đại diện</span>
+            {% else %}<button class="btn btn-sm btn-light py-0" formaction="{{ url_for('admin.image_primary', iid=im.id) }}" formnovalidate>Đặt đại diện</button>{% endif %}
+            <button class="btn btn-sm btn-outline-danger py-0" formaction="{{ url_for('admin.image_delete', iid=im.id) }}" formnovalidate title="Xóa ảnh"><i class="bi bi-x"></i></button>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+      <input class="form-control" type="file" name="images" accept="image/*" multiple>
+      <div class="form-text">Có thể chọn nhiều ảnh (JPG, PNG, WEBP – tối đa 5MB). Ảnh đầu tiên sẽ là ảnh đại diện.</div>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="card-a p-3">
+      <div class="form-check form-switch mb-2"><input class="form-check-input" type="checkbox" name="is_active" id="isActive" {{ 'checked' if p.is_active }}><label class="form-check-label" for="isActive">Hiển thị trên cửa hàng</label></div>
+      <div class="form-check form-switch mb-3"><input class="form-check-input" type="checkbox" name="is_featured" id="isFeat" {{ 'checked' if p.is_featured }}><label class="form-check-label" for="isFeat">Sản phẩm nổi bật</label></div>
+      {% if p.id %}<div class="small text-muted mb-3">Đã bán: {{ p.sold_quantity | qty }} {{ p.unit }}<br>Tạo lúc: {{ p.created_at | dt }}<br>
+        <a href="{{ url_for('product.detail', slug=p.slug) }}" target="_blank">Xem trên cửa hàng <i class="bi bi-box-arrow-up-right"></i></a></div>{% endif %}
+      <button class="btn btn-coral w-100 mb-2">{{ 'Lưu thay đổi' if p.id else 'Thêm sản phẩm' }}</button>
+      <a class="btn btn-light w-100" href="{{ url_for('admin.products') }}">Quay lại</a>
+    </div>
+  </div>
+</form>
+{% endblock %}

@@ -1,0 +1,29 @@
+{% extends "account/_layout.html" %}
+{% from "partials/macros.html" import order_badge, pay_badge with context %}
+{% block title %}Đơn hàng của tôi{% endblock %}
+{% set active = 'orders' %}
+{% block account %}
+<h4 class="fw-bold mb-3">Đơn hàng của tôi</h4>
+<ul class="nav status-tabs border-bottom mb-3 flex-nowrap overflow-auto">
+  <li class="nav-item"><a class="nav-link {{ 'active' if not status }}" href="{{ url_for('order.my_orders') }}">Tất cả ({{ counts.all }})</a></li>
+  {% for key, (label, _) in ORDER_STATUS.items() %}
+  <li class="nav-item"><a class="nav-link text-nowrap {{ 'active' if status == key }}" href="{{ url_for('order.my_orders', **{'trang-thai': key}) }}">{{ label }} ({{ counts[key] }})</a></li>
+  {% endfor %}
+</ul>
+{% for o in orders %}
+<div class="card-soft p-3 mb-3">
+  <div class="d-flex justify-content-between flex-wrap gap-2">
+    <div><b>{{ o.order_code }}</b> <span class="text-muted small">· {{ o.created_at | dt }}</span></div>
+    <div>{{ order_badge(o.status) }} {{ pay_badge(o.payment_status) }}</div>
+  </div>
+  <div class="small text-muted my-2">{{ o.first_item }}{% if o.item_count > 1 %} và {{ o.item_count - 1 }} sản phẩm khác{% endif %}</div>
+  <div class="d-flex justify-content-between align-items-center">
+    <div>Tổng: <b class="text-coral">{{ o.total_amount | vnd }}</b></div>
+    <a class="btn btn-sm btn-outline-ocean rounded-pill" href="{{ url_for('order.tracking', code=o.order_code) }}">Xem chi tiết</a>
+  </div>
+</div>
+{% else %}
+<div class="empty-state card-soft"><i class="bi bi-receipt"></i><p class="mt-3">Chưa có đơn hàng nào.</p>
+  <a class="btn btn-coral rounded-pill" href="{{ url_for('product.listing') }}">Mua sắm ngay</a></div>
+{% endfor %}
+{% endblock %}

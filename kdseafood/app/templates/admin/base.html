@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Quản trị{% endblock %} | KDSeaFood Admin</title>
+  <link rel="icon" href="{{ url_for('static', filename='img/logo.svg') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='vendor/fonts/be-vietnam-pro.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='vendor/bootstrap/bootstrap.min.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='vendor/bootstrap-icons/bootstrap-icons.min.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+</head>
+<body>
+{% set ep = request.endpoint or '' %}
+<aside class="sidebar" id="sidebar">
+  <a class="logo" href="{{ url_for('admin.dashboard') }}"><i class="bi bi-water"></i> KD<span>SeaFood</span></a>
+  <nav class="nav flex-column">
+    <a class="nav-link {{ 'active' if ep == 'admin.dashboard' }}" href="{{ url_for('admin.dashboard') }}"><i class="bi bi-speedometer2"></i>Tổng quan</a>
+    <div class="label">Bán hàng</div>
+    <a class="nav-link {{ 'active' if ep.startswith('admin.order') }}" href="{{ url_for('admin.orders') }}"><i class="bi bi-receipt"></i>Đơn hàng</a>
+    <a class="nav-link {{ 'active' if ep.startswith('admin.customer') }}" href="{{ url_for('admin.customers') }}"><i class="bi bi-people"></i>Khách hàng</a>
+    <a class="nav-link {{ 'active' if ep.startswith('admin.review') }}" href="{{ url_for('admin.reviews') }}"><i class="bi bi-star"></i>Đánh giá
+      {% if pending_reviews %}<span class="badge rounded-pill bg-danger ms-auto">{{ pending_reviews }}</span>{% endif %}</a>
+    <div class="label">Sản phẩm</div>
+    <a class="nav-link {{ 'active' if ep.startswith('admin.product') or ep.startswith('admin.image') }}" href="{{ url_for('admin.products') }}"><i class="bi bi-box-seam"></i>Sản phẩm</a>
+    <a class="nav-link {{ 'active' if ep.startswith('admin.categor') }}" href="{{ url_for('admin.categories') }}"><i class="bi bi-tags"></i>Danh mục</a>
+    <div class="label">Hệ thống</div>
+    <a class="nav-link" href="{{ url_for('main.home') }}" target="_blank"><i class="bi bi-shop"></i>Xem cửa hàng</a>
+    <a class="nav-link {{ 'active' if ep == 'admin.change_password' }}" href="{{ url_for('admin.change_password') }}"><i class="bi bi-key"></i>Đổi mật khẩu</a>
+  </nav>
+</aside>
+
+<div class="main">
+  <div class="topnav d-flex align-items-center gap-3">
+    <button class="btn btn-light d-lg-none" onclick="document.getElementById('sidebar').classList.toggle('show')"><i class="bi bi-list"></i></button>
+    <h5 class="fw-bold mb-0">{% block heading %}{% endblock %}</h5>
+    <div class="ms-auto d-flex align-items-center gap-2">
+      <span class="small text-muted d-none d-sm-inline"><i class="bi bi-person-circle me-1"></i>{{ g.admin.full_name }}</span>
+      <form method="post" action="{{ url_for('auth.logout') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button class="btn btn-sm btn-outline-secondary"><i class="bi bi-box-arrow-right"></i> Đăng xuất</button></form>
+    </div>
+  </div>
+  <div class="content">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for cat, msg in messages %}
+        <div class="alert alert-{{ cat }} alert-dismissible fade show">{{ msg }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+      {% endfor %}
+    {% endwith %}
+    {% block content %}{% endblock %}
+  </div>
+</div>
+
+<script src="{{ url_for('static', filename='vendor/bootstrap/bootstrap.bundle.min.js') }}"></script>
+<script>
+  document.addEventListener('submit', (e) => { const m = e.target.dataset.confirm; if (m && !confirm(m)) e.preventDefault(); });
+</script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

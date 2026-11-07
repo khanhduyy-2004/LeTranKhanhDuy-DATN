@@ -1,0 +1,63 @@
+{% macro stars(value, size='') -%}
+  <span class="stars {{ size }}">{% for i in range(1, 6) %}<i class="bi {{ 'bi-star-fill' if value >= i else ('bi-star-half' if value >= i - 0.5 else 'bi-star off') }}"></i>{% endfor %}</span>
+{%- endmacro %}
+
+{% macro product_card(p) -%}
+<div class="product-card">
+  <div class="thumb">
+    <a href="{{ url_for('product.detail', slug=p.slug) }}"><img src="{{ p.image | img }}" alt="{{ p.name }}" loading="lazy"></a>
+    {% if p.stock_quantity <= 0 %}<span class="tag bg-secondary text-white">Hết hàng</span>
+    {% elif p.is_featured %}<span class="tag bg-warning text-dark">Nổi bật</span>{% endif %}
+    {% if not g.admin %}
+    <button class="wish js-wish" data-url="{{ url_for('account.wishlist_toggle', pid=p.id) }}" title="Yêu thích">
+      <i class="bi {{ 'bi-heart-fill' if p.id in wish_ids else 'bi-heart' }}"></i></button>
+    {% endif %}
+  </div>
+  <div class="body">
+    <div class="cat">{{ p.category_name }}{% if p.origin %} · {{ p.origin.split(',')[0] }}{% endif %}</div>
+    <a class="name" href="{{ url_for('product.detail', slug=p.slug) }}">{{ p.name }}</a>
+    <div class="meta my-1">
+      {% if p.review_count %}{{ stars(p.avg_rating | float) }} <span>({{ p.review_count }})</span>{% else %}<span>Chưa có đánh giá</span>{% endif %}
+      {% if p.sold_quantity > 0 %} · Đã bán {{ p.sold_quantity | qty }}{% endif %}
+    </div>
+    <div class="d-flex align-items-end justify-content-between mt-auto">
+      <div class="price">{{ p.price | vnd }}<small>/{{ p.unit }}</small></div>
+      {% if not g.admin and p.stock_quantity > 0 %}
+      <form method="post" action="{{ url_for('cart.add') }}" class="js-add-cart">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="product_id" value="{{ p.id }}">
+        <input type="hidden" name="quantity" value="1">
+        <button class="btn btn-coral btn-sm btn-add" title="Thêm vào giỏ"><i class="bi bi-bag-plus"></i></button>
+      </form>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{%- endmacro %}
+
+{% macro paginate(p, endpoint) -%}
+{% if p.pages > 1 %}
+<nav class="mt-4"><ul class="pagination justify-content-center">
+  {% set args = request.args.to_dict() %}
+  <li class="page-item {{ 'disabled' if p.page <= 1 }}">
+    {% set _ = args.update({'page': p.page - 1}) %}<a class="page-link" href="{{ url_for(endpoint, **args) }}">&laquo;</a></li>
+  {% for n in p.iter_pages() %}
+    {% if n %}{% set _ = args.update({'page': n}) %}
+      <li class="page-item {{ 'active' if n == p.page }}"><a class="page-link" href="{{ url_for(endpoint, **args) }}">{{ n }}</a></li>
+    {% else %}<li class="page-item disabled"><span class="page-link">…</span></li>{% endif %}
+  {% endfor %}
+  {% set _ = args.update({'page': p.page + 1}) %}
+  <li class="page-item {{ 'disabled' if p.page >= p.pages }}"><a class="page-link" href="{{ url_for(endpoint, **args) }}">&raquo;</a></li>
+</ul></nav>
+{% endif %}
+{%- endmacro %}
+
+{% macro order_badge(status) -%}
+  <span class="badge text-bg-{{ ORDER_STATUS[status][1] }}">{{ ORDER_STATUS[status][0] }}</span>
+{%- endmacro %}
+
+{% macro pay_badge(status) -%}
+  <span class="badge text-bg-{{ PAYMENT_STATUS[status][1] }}">{{ PAYMENT_STATUS[status][0] }}</span>
+{%- endmacro %}
+
+{% macro csrf() -%}<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">{%- endmacro %}

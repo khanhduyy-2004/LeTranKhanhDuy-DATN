@@ -1,0 +1,45 @@
+{% extends "admin/base.html" %}
+{% from "partials/macros.html" import csrf, paginate with context %}
+{% block title %}Sản phẩm{% endblock %}
+{% block heading %}Quản lý sản phẩm{% endblock %}
+{% block content %}
+<div class="d-flex flex-wrap gap-2 mb-3">
+  <form class="d-flex flex-wrap gap-2 flex-grow-1" method="get">
+    <input class="form-control" style="max-width:260px" name="q" value="{{ q }}" placeholder="Tìm tên sản phẩm…">
+    <select class="form-select" style="max-width:200px" name="danh-muc"><option value="">Tất cả danh mục</option>
+      {% for c in categories %}<option value="{{ c.id }}" {{ 'selected' if cat == c.id }}>{{ c.name }}</option>{% endfor %}</select>
+    <select class="form-select" style="max-width:180px" name="loc">
+      <option value="">Tất cả trạng thái</option><option value="active" {{ 'selected' if status == 'active' }}>Đang bán</option>
+      <option value="hidden" {{ 'selected' if status == 'hidden' }}>Đang ẩn</option><option value="low" {{ 'selected' if status == 'low' }}>Sắp hết hàng</option></select>
+    <button class="btn btn-ocean"><i class="bi bi-funnel"></i> Lọc</button>
+  </form>
+  <a class="btn btn-coral" href="{{ url_for('admin.product_add') }}"><i class="bi bi-plus-lg"></i> Thêm sản phẩm</a>
+</div>
+<div class="card-a table-responsive">
+  <table class="table table-hover mb-0">
+    <thead><tr><th>Sản phẩm</th><th>Danh mục</th><th class="text-end">Giá</th><th class="text-end">Tồn kho</th><th class="text-end">Đã bán</th><th class="text-center">Nổi bật</th><th class="text-center">Hiển thị</th><th></th></tr></thead>
+    <tbody>
+    {% for p in products %}
+      <tr>
+        <td><div class="d-flex align-items-center gap-2"><img class="thumb-sm" src="{{ p.image | img }}" alt="">
+          <div><a class="fw-semibold" href="{{ url_for('admin.product_edit', pid=p.id) }}">{{ p.name }}</a><div class="small text-muted">{{ p.origin or '' }}</div></div></div></td>
+        <td>{{ p.category_name }}</td>
+        <td class="text-end">{{ p.price | vnd }}/{{ p.unit }}</td>
+        <td class="text-end {{ 'text-danger fw-bold' if p.stock_quantity < 10 }}">{{ p.stock_quantity | qty }}</td>
+        <td class="text-end">{{ p.sold_quantity | qty }}</td>
+        {% for field in ['is_featured', 'is_active'] %}
+        <td class="text-center"><form method="post" action="{{ url_for('admin.product_toggle', pid=p.id, field=field) }}">{{ csrf() }}
+          <button class="btn btn-sm border-0 fs-5 {{ 'text-success' if p[field] else 'text-secondary' }}" title="Bật/tắt"><i class="bi {{ 'bi-toggle-on' if p[field] else 'bi-toggle-off' }}"></i></button></form></td>
+        {% endfor %}
+        <td class="text-end text-nowrap">
+          <a class="btn btn-sm btn-light" href="{{ url_for('admin.product_edit', pid=p.id) }}"><i class="bi bi-pencil"></i></a>
+          <form class="d-inline" method="post" action="{{ url_for('admin.product_delete', pid=p.id) }}" data-confirm="Xóa sản phẩm “{{ p.name }}”? Thao tác không thể hoàn tác.">{{ csrf() }}
+            <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button></form>
+        </td>
+      </tr>
+    {% else %}<tr><td colspan="8" class="text-center text-muted py-4">Không có sản phẩm.</td></tr>{% endfor %}
+    </tbody>
+  </table>
+</div>
+<div class="d-flex justify-content-between align-items-center"><span class="small text-muted mt-3">{{ total }} sản phẩm</span>{{ paginate(pagination, 'admin.products') }}</div>
+{% endblock %}

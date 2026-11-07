@@ -1,0 +1,36 @@
+{% extends "admin/base.html" %}
+{% from "partials/macros.html" import csrf, paginate with context %}
+{% block title %}Khách hàng{% endblock %}
+{% block heading %}Quản lý khách hàng{% endblock %}
+{% block content %}
+<form class="d-flex flex-wrap gap-2 mb-3" method="get">
+  <input class="form-control" style="max-width:300px" name="q" value="{{ q }}" placeholder="Tên, email, số điện thoại…">
+  <select class="form-select" style="max-width:200px" name="trang-thai"><option value="">Tất cả</option>
+    <option value="1" {{ 'selected' if status == '1' }}>Đang hoạt động</option><option value="0" {{ 'selected' if status == '0' }}>Đã khóa</option></select>
+  <button class="btn btn-ocean"><i class="bi bi-search"></i> Tìm</button>
+</form>
+<div class="card-a table-responsive">
+  <table class="table table-hover mb-0">
+    <thead><tr><th>Khách hàng</th><th>Liên hệ</th><th>Ngày đăng ký</th><th class="text-center">Số đơn</th><th class="text-end">Đã chi tiêu</th><th>Trạng thái</th><th></th></tr></thead>
+    <tbody>
+    {% for u in customers %}
+      <tr>
+        <td><div class="d-flex align-items-center gap-2"><img class="thumb-sm rounded-circle" src="{{ u.avatar_url | img('avatar') }}" alt="">
+          <div><a class="fw-semibold" href="{{ url_for('admin.customer_detail', uid=u.id) }}">{{ u.full_name }}</a><div class="small text-muted">@{{ u.username }}</div></div></div></td>
+        <td>{{ u.email }}<div class="small text-muted">{{ u.phone or '' }}</div></td>
+        <td>{{ u.created_at | dt('%d/%m/%Y') }}</td>
+        <td class="text-center">{{ u.order_count }}</td>
+        <td class="text-end">{{ u.total_spent | vnd }}</td>
+        <td>{% if u.is_active %}<span class="badge text-bg-success">Hoạt động</span>{% else %}<span class="badge text-bg-danger">Đã khóa</span>{% endif %}</td>
+        <td class="text-end text-nowrap">
+          <a class="btn btn-sm btn-light" href="{{ url_for('admin.customer_detail', uid=u.id) }}"><i class="bi bi-eye"></i></a>
+          <form class="d-inline" method="post" action="{{ url_for('admin.customer_toggle', uid=u.id) }}" data-confirm="{{ 'Khóa' if u.is_active else 'Mở khóa' }} tài khoản {{ u.username }}?">{{ csrf() }}
+            <button class="btn btn-sm {{ 'btn-outline-danger' if u.is_active else 'btn-outline-success' }}">{{ 'Khóa' if u.is_active else 'Mở khóa' }}</button></form>
+        </td>
+      </tr>
+    {% else %}<tr><td colspan="7" class="text-center text-muted py-4">Không có khách hàng.</td></tr>{% endfor %}
+    </tbody>
+  </table>
+</div>
+<div class="d-flex justify-content-between align-items-center"><span class="small text-muted mt-3">{{ total }} khách hàng</span>{{ paginate(pagination, 'admin.customers') }}</div>
+{% endblock %}

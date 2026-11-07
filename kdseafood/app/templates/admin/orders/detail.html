@@ -1,0 +1,74 @@
+{% extends "admin/base.html" %}
+{% from "partials/macros.html" import order_badge, pay_badge, csrf with context %}
+{% block title %}Đơn {{ o.order_code }}{% endblock %}
+{% block heading %}Đơn hàng {{ o.order_code }}{% endblock %}
+{% block content %}
+<div class="d-flex flex-wrap gap-2 align-items-center mb-3">
+  <a class="btn btn-sm btn-light" href="{{ url_for('admin.orders') }}"><i class="bi bi-arrow-left"></i> Danh sách</a>
+  {{ order_badge(o.status) }} {{ pay_badge(o.payment_status) }}
+  <span class="text-muted small ms-auto">Đặt lúc {{ o.created_at | dt }}{% if o.delivered_at %} · Giao lúc {{ o.delivered_at | dt }}{% endif %}</span>
+</div>
+<div class="row g-3">
+  <div class="col-xl-8">
+    <div class="card-a mb-3">
+      <div class="table-responsive"><table class="table mb-0">
+        <thead><tr><th>Sản phẩm</th><th class="text-end">Đơn giá</th><th class="text-end">Số lượng</th><th class="text-end">Thành tiền</th></tr></thead>
+        <tbody>
+        {% for it in items %}
+        <tr><td><div class="d-flex align-items-center gap-2"><img class="thumb-sm" src="{{ it.image | img }}" alt="">{{ it.product_name }}</div></td>
+          <td class="text-end">{{ it.unit_price | vnd }}</td><td class="text-end">{{ it.quantity | qty }} {{ it.unit }}</td><td class="text-end fw-semibold">{{ it.line_total | vnd }}</td></tr>
+        {% endfor %}
+        </tbody>
+        <tfoot>
+          <tr><td colspan="3" class="text-end">Tạm tính</td><td class="text-end">{{ o.subtotal | vnd }}</td></tr>
+          <tr><td colspan="3" class="text-end">Phí giao hàng</td><td class="text-end">{{ o.shipping_fee | vnd }}</td></tr>
+          <tr><td colspan="3" class="text-end fw-bold">Tổng cộng</td><td class="text-end fw-bold text-danger fs-5">{{ o.total_amount | vnd }}</td></tr>
+        </tfoot>
+      </table></div>
+    </div>
+    <div class="row g-3">
+      <div class="col-md-6"><div class="card-a p-3 h-100">
+        <h6 class="fw-bold">Khách hàng</h6>
+        <a href="{{ url_for('admin.customer_detail', uid=o.user_id) }}" class="fw-semibold">{{ o.customer_name }}</a>
+        <div class="small text-muted">{{ o.customer_email }} · {{ o.customer_phone or '' }}</div>
+        <h6 class="fw-bold mt-3">Giao đến</h6>
+        <div class="small"><b>{{ o.receiver_name }}</b> · {{ o.receiver_phone }}<br>{{ o.shipping_address }}</div>
+        {% if o.note %}<div class="small mt-2 p-2 bg-warning-subtle rounded"><i class="bi bi-chat-left-text me-1"></i>{{ o.note }}</div>{% endif %}
+      </div></div>
+      <div class="col-md-6"><div class="card-a p-3 h-100">
+        <h6 class="fw-bold">Thanh toán</h6>
+        <div class="small">{{ PAYMENT_METHOD[o.payment_method] }}</div>
+        <div class="mt-1">{{ pay_badge(o.payment_status) }}</div>
+        {% if o.transaction_ref %}<div class="small text-muted mt-1">Mã giao dịch: {{ o.transaction_ref }}</div>{% endif %}
+        {% if o.cancel_reason %}<div class="small text-danger mt-2">Lý do hủy: {{ o.cancel_reason }}</div>{% endif %}
+      </div></div>
+    </div>
+  </div>
+
+  <div class="col-xl-4">
+    <div class="card-a p-3 mb-3">
+      <h6 class="fw-bold">Cập nhật trạng thái</h6>
+      {% if next_status %}
+      <form method="post" action="{{ url_for('admin.order_status', oid=o.id) }}">
+        {{ csrf() }}
+        <select class="form-select mb-2" name="status">
+          {% for s in next_status %}<option value="{{ s }}">{{ '→ ' ~ ORDER_STATUS[s][0] }}</option>{% endfor %}
+        </select>
+        <input class="form-control mb-2" name="note" maxlength="255" placeholder="Ghi chú (bắt buộc khi hủy)">
+        <button class="btn btn-coral w-100">Cập nhật</button>
+      </form>
+      <div class="form-text">Đơn chỉ chuyển tiến theo thứ tự. Khi hủy, tồn kho được hoàn lại; khi “Đã giao”, đơn được tính vào doanh thu.</div>
+      {% else %}<div class="text-muted small">Đơn hàng đã kết thúc, không thể thay đổi trạng thái.</div>{% endif %}
+    </div>
+    <div class="card-a p-3">
+      <h6 class="fw-bold">Lịch sử xử lý</h6>
+      <div class="timeline small">
+        {% for h in history %}
+        <div class="ev"><b>{{ ORDER_STATUS[h.new_status][0] }}</b> <span class="text-muted">· {{ h.created_at | dt }}</span>
+          <div class="text-muted">{{ h.admin_name or h.user_name or 'Hệ thống' }}{% if h.note %} – {{ h.note }}{% endif %}</div></div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
